@@ -1,10 +1,10 @@
 [package]
 name = "spectrometer"
-version = "0.0.2"
+version = "0.0.3"
 authors = ["Gabriele Bianchet-David <gbianchetdavid@ebsco.com>"]
 edition = "2018"
 description = "Crate for getting machine details purely in Rust"
 license = "MIT"
 
-[dependencies]
+[target.'cfg(windows)'.dependencies]
 winapi = {version = "0.3.7", features = ["processthreadsapi", "sysinfoapi", "impl-debug", "fileapi", "winbase", "lmcons", "std"]}
