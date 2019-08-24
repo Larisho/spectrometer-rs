@@ -1,9 +1,9 @@
 [package]
 name = "spectrometer"
-version = "0.0.1"
+version = "0.0.2"
 authors = ["Gabriele Bianchet-David <gbianchetdavid@ebsco.com>"]
 edition = "2018"
-description = "Crate for getting machine details"
+description = "Crate for getting machine details purely in Rust"
 license = "MIT"
 
 [dependencies]

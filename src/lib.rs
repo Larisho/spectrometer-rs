@@ -9,6 +9,7 @@ use std::{time, thread, mem, env};
 use std::io::{Error, ErrorKind};
 
 #[derive(Debug, Clone)]
+/// A `struct` containing relevant CPU values
 pub struct CPU {
     pub user: f32,
     pub system: f32,
@@ -17,6 +18,7 @@ pub struct CPU {
 }
 
 #[derive(Debug, Clone)]
+/// A `struct` containing relevant FileSystem values
 pub struct FS {
     pub mount: String,
     pub free: u64,
@@ -25,6 +27,7 @@ pub struct FS {
 }
 
 #[derive(Debug, Clone)]
+/// A `struct` containing relevant Memory values
 pub struct Mem {
     pub load: f32,
     pub total: u64,
@@ -32,12 +35,19 @@ pub struct Mem {
     pub free: u64
 }
 
-fn cpu_load() -> Result<CPU, Error> {
+/// Gets the CPU load. Currently, on Windows, this requires sleeping for a particular duration
+/// (default is 250 millis--use `cpu_load_with_duration` to specify sleep time) to get an estimate
+/// on the CPU load.
+///
+/// Ideally, this will change in the future to not require sleeping like in Linux
+pub fn cpu_load() -> Result<CPU, Error> {
     cpu_load_with_duration(time::Duration::from_millis(250))
 }
 
 // TODO(gab): Contemplate changing to use Performance Counters
-fn cpu_load_with_duration(duration: time::Duration) -> Result<CPU, Error> { 
+/// Gets the CPU load. Currently, on Windows, this requires sleeping for `duration` amount of time to
+/// get an estimate on the CPU load.
+pub fn cpu_load_with_duration(duration: time::Duration) -> Result<CPU, Error> { 
     let mut base_idle_time = FILETIME { dwHighDateTime: 0, dwLowDateTime: 0 };
     let mut base_kernel_time = FILETIME { dwHighDateTime: 0, dwLowDateTime: 0 };
     let mut base_user_time = FILETIME { dwHighDateTime: 0, dwLowDateTime: 0 };
@@ -78,7 +88,11 @@ fn filetime2u64(filetime: &FILETIME) -> u64 {
     ((filetime.dwHighDateTime as u64) << 32) | filetime.dwLowDateTime as u64
 }
 
-fn get_drives() -> Result<Vec<String>, Error> {
+/// Gets a `Vec<String>` of drive names.
+///
+/// This function's name will most likely change in the future to use a more generic term
+/// for `drive` (mostly because the term `mount` is more widely used).
+pub fn get_drives() -> Result<Vec<String>, Error> {
     let buffer_size = 512;
     let mut buffer: Vec<WCHAR> = Vec::with_capacity(buffer_size);
 
@@ -121,7 +135,8 @@ fn get_drives() -> Result<Vec<String>, Error> {
     }
 }
 
-fn drive_details(drive: String) -> Result<FS, Error> {
+/// Gets File System information based on the drive provided
+pub fn drive_details(drive: String) -> Result<FS, Error> {
     let u16_drive = str2u16(&drive).as_ptr();
     let mut avail: ULARGE_INTEGER = unsafe { mem::zeroed() };
     let mut free: ULARGE_INTEGER = unsafe { mem::zeroed() };
@@ -144,8 +159,8 @@ fn str2u16(string: &String) -> Vec<u16> {
     v.push(0);
     v
 }
-
-fn memory_details() -> Result<Mem, Error> {
+/// Gets the machine's current Memory statistics.
+pub fn memory_details() -> Result<Mem, Error> {
     let mut memory: MEMORYSTATUSEX = MEMORYSTATUSEX {
         dwLength: mem::size_of::<MEMORYSTATUSEX>() as u32,
         dwMemoryLoad: 0,
@@ -170,13 +185,15 @@ fn memory_details() -> Result<Mem, Error> {
     })
 }
 
-fn uptime() -> u64 {
+/// Gets the uptime in seconds
+pub fn uptime() -> u64 {
     let ticks = unsafe { GetTickCount64() };
     
     ticks / 1000
 }
 
-fn logical_cpus() -> u32 {
+/// Gets the number of logical CPUs the machine has
+pub fn logical_cpus() -> u32 {
     let mut system_info = SYSTEM_INFO {
         u: unsafe { mem::zeroed() },
         dwPageSize: 0,
@@ -195,7 +212,8 @@ fn logical_cpus() -> u32 {
     system_info.dwNumberOfProcessors
 }
 
-fn arch() -> String {
+/// Gets the machine's architecture
+pub fn arch() -> String {
     let mut system_info = SYSTEM_INFO {
         u: unsafe { mem::zeroed() },
         dwPageSize: 0,
@@ -221,7 +239,8 @@ fn arch() -> String {
     }
 }
 
-fn hostname() -> Result<String, Error> {
+/// Gets the machine's hostname
+pub fn hostname() -> Result<String, Error> {
     let mut buffer_size = 62;
     let mut buffer = Vec::with_capacity(buffer_size);
 
@@ -243,7 +262,8 @@ fn hostname() -> Result<String, Error> {
     Ok(String::from_utf16(&buffer).unwrap())
 }
 
-fn username() -> Result<String, Error> {
+/// Gets the current user's username without relying on environment variables
+pub fn username() -> Result<String, Error> {
     let mut buffer_size = (UNLEN + 1) as usize;
     let mut buffer = Vec::with_capacity(buffer_size);
     
@@ -265,7 +285,9 @@ fn username() -> Result<String, Error> {
     Ok(String::from_utf16(&buffer).unwrap())
 }
 
-fn os_name() -> String {
+/// Gets the OS name. Currently just returning a `String::from("Windows")` because this library only
+/// works on Windows for the time being.
+pub fn os_name() -> String {
     String::from("Windows")
 }
 
